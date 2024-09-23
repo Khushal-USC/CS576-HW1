@@ -111,11 +111,12 @@ public class ImageDisplay {
 				for (int k = i-R; k <= i+R; k++) {
 					int x = 0;
 					for (int l = j-R; l <= j+R; l++) {
-						// int color = 0xff404040;
-						// if(l >= 0 && l < width && k >=0 && k < height){
-						// 	color = imgIn.getRGB(l, k);
-						// }
-						int color = color = imgIn.getRGB(l, k);
+						int color = 0;
+						if(l >= 0 && l < width && k >=0 && k < height){
+							color = imgIn.getRGB(l, k);
+						} else {
+							color = imgIn.getRGB(Math.min(Math.max(l,0),width-1), Math.min(Math.max(k,0),height-1));
+						}
 						
 						double weight = m[x][y];
 						// System.err.println(weight);
@@ -193,26 +194,34 @@ public class ImageDisplay {
 
 
 	public void showIms(String[] args){
-		int width = 400;
-		int height = 300;
+		int width = 4000;
+		int height = 3000;
 
 		// Read in the specified image
-		imgOne = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-		readImageRGB(width, height, args[0], imgOne);
+		BufferedImage res = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		readImageRGB(width, height, args[0], res);
 
-		// //Downsample1
+		//Downsample1
 		// int outWidth = 640;
 		// int outHeight = 400;
-		// BufferedImage imgDS1Out = new BufferedImage(outWidth, outHeight, BufferedImage.TYPE_INT_RGB);
-		// downSample1(width, height, outWidth, outHeight, imgOne, imgDS1Out);
+		// BufferedImage ds1Out = new BufferedImage(outWidth, outHeight, BufferedImage.TYPE_INT_RGB);
+		// downSample1(width, height, outWidth, outHeight, res, ds1Out);
+		// res = ds1Out;
 
+		//Downsample2
 		//GaussBlur
 		double rho = 3;
-		
-		BufferedImage imgOneExtended = deepCopy(imgOne);
 
-		BufferedImage imgBlur = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-		gaussBlur(width, height, (int)(3*rho), rho, imgOne, imgBlur);
+		BufferedImage imgBlurOut = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		gaussBlur(width, height, (int)(3*rho), rho, res, imgBlurOut);
+		res = imgBlurOut;
+		
+		//Then Ds1
+		int outWidth = 640;
+		int outHeight = 400;
+		BufferedImage ds1Out = new BufferedImage(outWidth, outHeight, BufferedImage.TYPE_INT_RGB);
+		downSample1(width, height, outWidth, outHeight, res, ds1Out);
+		res = ds1Out;
 
 		// Use label to display the image
 		frame = new JFrame();
@@ -221,7 +230,7 @@ public class ImageDisplay {
 
 		// lbIm1 = new JLabel(new ImageIcon(imgOne));
 		// lbIm1 = new JLabel(new ImageIcon(imgDS1Out));
-		lbIm1 = new JLabel(new ImageIcon(imgBlur));
+		lbIm1 = new JLabel(new ImageIcon(res));
 
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL;
@@ -252,11 +261,17 @@ public class ImageDisplay {
 		// 	e.printStackTrace();
 		// }
 		try {
-			ImageIO.write(imgBlur, "png", outputfile);
+			ImageIO.write(res, "png", outputfile);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		// try {
+		// 	ImageIO.write(imgBlur, "png", outputfile);
+		// } catch (IOException e) {
+		// 	// TODO Auto-generated catch block
+		// 	e.printStackTrace();
+		// }
 	}
 
 	public static void main(String[] args) {
