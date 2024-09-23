@@ -98,9 +98,9 @@ public class ImageDisplay {
 		// 	System.out.println();
 		// }
 
-		for (int i = R; i < height-R; i++) {
+		for (int i = 0; i < height; i++) {
 			// System.err.println("herey" + i);
-			for (int j = R; j < width-R; j++) {
+			for (int j = 0; j < width; j++) {
 				// System.err.println("here" + j);
 				double r_s = 0;
 				double g_s = 0;
@@ -111,7 +111,12 @@ public class ImageDisplay {
 				for (int k = i-R; k <= i+R; k++) {
 					int x = 0;
 					for (int l = j-R; l <= j+R; l++) {
-						int color = imgIn.getRGB(l, k);
+						// int color = 0xff404040;
+						// if(l >= 0 && l < width && k >=0 && k < height){
+						// 	color = imgIn.getRGB(l, k);
+						// }
+						int color = color = imgIn.getRGB(l, k);
+						
 						double weight = m[x][y];
 						// System.err.println(weight);
 
@@ -204,7 +209,9 @@ public class ImageDisplay {
 		//GaussBlur
 		double rho = 3;
 		
-		BufferedImage imgBlur = deepCopy(imgOne);
+		BufferedImage imgOneExtended = deepCopy(imgOne);
+
+		BufferedImage imgBlur = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		gaussBlur(width, height, (int)(3*rho), rho, imgOne, imgBlur);
 
 		// Use label to display the image
