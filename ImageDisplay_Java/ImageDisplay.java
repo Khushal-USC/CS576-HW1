@@ -298,6 +298,55 @@ public class ImageDisplay {
 		}
 	}
 
+	// private double nonLinearStep(int width, int outWidth, int step){
+	// 	return (width * Math.pow(step, 2))/(Math.pow(outWidth, 2));
+	// }
+	// private int linearStep(int width, int outWidth, int step){
+	// 	return (outWidth/width) * step;
+	// }
+
+	private int nonLinearStep(int width, int outWidth, int step){
+		return (int)((width * Math.pow(step, 2))/(Math.pow(outWidth, 2)));
+	}
+	private int linearStep(int width, int outWidth, int step) {
+		return (int)((double)step * width / outWidth);
+	}
+//x = ((int)nonLinearStep(width, outWidth, x+1));
+	private void downSampleNonLinear(int width, int height,int outWidth, int outHeight, BufferedImage imgIn, BufferedImage imgOut)
+	{
+		//int y = 0;
+		int outY = 0;
+		while(outY < outHeight)
+		{
+			//int x = 0;
+			int outX = 0;
+			while(outX < outWidth)
+			{
+				//System.out.println("herex " +x);
+				int color = imgIn.getRGB(nonLinearStep(width, outWidth, outX), nonLinearStep(height, outHeight, outY));
+
+				// Components will be in the range of 0..255:
+				byte r = (byte)((color & 0xff0000) >> 16);
+				byte g = (byte)((color & 0xff00) >> 8);
+				byte b = (byte)(color & 0xff);
+				
+				byte a = (byte)((color & 0xff000000) >> 24);
+
+				//int pixOut = 0xff000000 | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
+				int pix = ((a << 24) + (r << 16) + (g << 8) + b);
+				//int pix = 0xff32A852;
+				imgOut.setRGB(outX,outY,pix);
+				// x = ((int)nonLinearStep(width, outWidth, x+1));
+				//x = (linearStep(width, outWidth, x+1));
+				outX++;
+			}
+			//System.out.println("herey " +y);
+			// y = ((int)nonLinearStep(height, outHeight, y+1));
+			//y = (linearStep(height, outHeight, y+1));
+			outY++;
+		}
+	}
+
 	static BufferedImage deepCopy(BufferedImage bi) {
 		ColorModel cm = bi.getColorModel();
 		boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
@@ -307,14 +356,14 @@ public class ImageDisplay {
 
 
 	public void showIms(String[] args){
-		int width = 400;
-		int height = 300;
+		int width = 4000;
+		int height = 3000;
 
 		// Read in the specified image
 		BufferedImage res = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		readImageRGB(width, height, args[0], res);
 
-		//Downsample1
+		// //Downsample1
 		// int outWidth = 640;
 		// int outHeight = 400;
 		// BufferedImage ds1Out = new BufferedImage(outWidth, outHeight, BufferedImage.TYPE_INT_RGB);
@@ -343,12 +392,19 @@ public class ImageDisplay {
 		// upSample1(width, height, outWidth, outHeight, res, us1Out);
 		// res = us1Out;
 
-		//Upsample
-		int outWidth = 1920;
-		int outHeight = 1080;
-		BufferedImage biOut = new BufferedImage(outWidth, outHeight, BufferedImage.TYPE_INT_RGB);
-		bilinear(width, height, outWidth, outHeight, res, biOut);
-		res = biOut;
+		// //Upsample
+		// int outWidth = 1920;
+		// int outHeight = 1080;
+		// BufferedImage biOut = new BufferedImage(outWidth, outHeight, BufferedImage.TYPE_INT_RGB);
+		// bilinear(width, height, outWidth, outHeight, res, biOut);
+		// res = biOut;
+
+		//PAR
+		int outWidth = 640;
+		int outHeight = 400;
+		BufferedImage ds1Out = new BufferedImage(outWidth, outHeight, BufferedImage.TYPE_INT_RGB);
+		downSampleNonLinear(width, height, outWidth, outHeight, res, ds1Out);
+		res = ds1Out;
 
 		// Use label to display the image
 		frame = new JFrame();
@@ -374,7 +430,7 @@ public class ImageDisplay {
 		frame.pack();
 		frame.setVisible(true);
 
-		File outputfile = new File("output2.png");
+		File outputfile = new File("output.png");
 		// try {
 		// 	ImageIO.write(imgOne, "png", outputfile);
 		// } catch (IOException e) {
