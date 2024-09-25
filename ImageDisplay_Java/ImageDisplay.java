@@ -305,12 +305,31 @@ public class ImageDisplay {
 	// 	return (outWidth/width) * step;
 	// }
 
-	private int nonLinearStep(int width, int outWidth, int step){
-		return (int)((width * Math.pow(step, 2))/(Math.pow(outWidth, 2)));
-	}
 	private int linearStep(int width, int outWidth, int step) {
 		return (int)((double)step * width / outWidth);
 	}
+
+	private int nonLinearStep(int width, int outWidth, int step){
+		return (int)((width * Math.pow(step, 2))/(Math.pow(outWidth, 2)));
+	}
+	// private int nonLinearStepFixed(int width, int outWidth, int step){
+	// 	return (int)((width * Math.pow(step, 3))/((Math.pow(outWidth, 3))));
+	// }
+	private int nonLinearStepFixed(int width, int outWidth, int step) {
+		// Reverse the stretching effect: distance from the edge instead of the center
+		int maxStep = outWidth - 1;  // Maximum value for step
+		int invertedStep = maxStep - step;  // Invert the step to stretch more at the edges
+	
+		// Apply the cubic scaling to the inverted step
+		return (int)((width * Math.pow(invertedStep, 3)) / (2 * Math.pow(maxStep, 3)));
+	}
+	
+
+	public static int clamp(int value, int min, int max) {
+		return (int)Math.max(min, Math.min(max, value));
+	}
+	
+
 //x = ((int)nonLinearStep(width, outWidth, x+1));
 	private void downSampleNonLinear(int width, int height,int outWidth, int outHeight, BufferedImage imgIn, BufferedImage imgOut)
 	{
@@ -323,8 +342,15 @@ public class ImageDisplay {
 			while(outX < outWidth)
 			{
 				//System.out.println("herex " +x);
-				int color = imgIn.getRGB(nonLinearStep(width, outWidth, outX), nonLinearStep(height, outHeight, outY));
+				// int color = imgIn.getRGB(clamp((nonLinearStepFixed(width/2, outWidth/2, outX-(outWidth/2)))+(width/2), 0, width-1),clamp((nonLinearStepFixed(height/2, outHeight/2, outX-(outWidth/2)))+(height/2),0,height-1));
+				// int color = imgIn.getRGB(clamp((nonLinearStepFixed(width/2, outWidth/2, outX-(outWidth/2)))+(width/2), 0, width-1),clamp((nonLinearStepFixed(height/2, outHeight/2, outY-(outHeight/2)))+(height/2),0,height-1));
 
+				// Apply the reversed non-linear transformation
+				int newX = clamp(nonLinearStepFixed(width/2, outWidth/2, 1-(outX-(outWidth/2))), 0, width - 1);
+				int newY = clamp(nonLinearStepFixed(height/2, outHeight/2, 1-(outY-(outHeight/2))), 0, height - 1);
+	
+				// Get the color from the original image
+				int color = imgIn.getRGB(newX, newY);
 				// Components will be in the range of 0..255:
 				byte r = (byte)((color & 0xff0000) >> 16);
 				byte g = (byte)((color & 0xff00) >> 8);
