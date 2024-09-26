@@ -308,6 +308,9 @@ public class ImageDisplay {
 	private int linearStep(int width, int outWidth, int step) {
 		return (int)((double)step * width / outWidth);
 	}
+	private int linearStep2(int width, int outWidth, int step) {
+		return (int)(((double)step * width / outWidth)-((0.003)*step*step));
+	}
 
 	private int nonLinearStep(int width, int outWidth, int step){
 		return (int)((width * Math.pow(step, 2))/(Math.pow(outWidth, 2)));
@@ -346,8 +349,8 @@ public class ImageDisplay {
 				// int color = imgIn.getRGB(clamp((nonLinearStepFixed(width/2, outWidth/2, outX-(outWidth/2)))+(width/2), 0, width-1),clamp((nonLinearStepFixed(height/2, outHeight/2, outY-(outHeight/2)))+(height/2),0,height-1));
 
 				// Apply the reversed non-linear transformation
-				int newX = clamp(nonLinearStepFixed(width/2, outWidth/2, 1-(outX-(outWidth/2))), 0, width - 1);
-				int newY = clamp(nonLinearStepFixed(height/2, outHeight/2, 1-(outY-(outHeight/2))), 0, height - 1);
+				int newX = clamp(linearStep2(width/2, outWidth/2, (outX-(outWidth/2)))+(width/2), 0, width - 1);
+				int newY = clamp(linearStep2(height/2, outHeight/2, (outY-(outHeight/2)))+(height/2), 0, height - 1);
 	
 				// Get the color from the original image
 				int color = imgIn.getRGB(newX, newY);
@@ -456,7 +459,7 @@ public class ImageDisplay {
 		frame.pack();
 		frame.setVisible(true);
 
-		File outputfile = new File("output.png");
+		File outputfile = new File("output3.png");
 		// try {
 		// 	ImageIO.write(imgOne, "png", outputfile);
 		// } catch (IOException e) {
