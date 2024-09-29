@@ -469,7 +469,7 @@ public class ImageDisplay {
 		//Get the subimage of the scaled image using edgeX and r
 		BufferedImage subImageLeft = scaledImage.getSubimage(0, 0, r, outHeight);
 		//Scale the subimageleft to have width of diffWidth
-		subImageLeft = nonlinearHorizontalScale(subImageLeft, leftSampleX, 0);
+		subImageLeft = nonlinearHorizontalScale(subImageLeft, leftSampleX, -0.7);
 
 		//Draw the scaled subimage to the left of the output image
 		//g2.drawImage(subImageLeft, 0, 0, null);
@@ -477,7 +477,7 @@ public class ImageDisplay {
 		//Get the subimage of the scaled image using edgeX and r
 		BufferedImage subImageRight = scaledImage.getSubimage(newWidth-r, 0, r, outHeight);
 		//Scale the subimage to have width of diffWidth
-		subImageRight= nonlinearHorizontalScale(subImageRight, rightSampleX, 0);
+		subImageRight= nonlinearHorizontalScale(subImageRight, rightSampleX, 0.7);
 
 		// //Output the subimage to the right of the output image
 		// g2.drawImage(subImageRight, outWidth-r, 0, null);
