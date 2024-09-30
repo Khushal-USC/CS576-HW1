@@ -267,11 +267,11 @@ public class ImageDisplay {
 	{
 		int y = 0;
 		int outY = 0;
-		while(outY < outHeight/3)
+		while(outY < outHeight)
 		{
 			int x = 0;
 			int outX = 0;
-			while(outX < outWidth/4)
+			while(outX < outWidth)
 			{
 				//System.out.println("herex " +x);
 				int color = imgIn.getRGB(x, y);
@@ -387,6 +387,36 @@ public class ImageDisplay {
         return scaledImage;
     }
 
+	private BufferedImage nonlinearVerticalScale(BufferedImage originalImage, int newHeight, double stretchFactor) {
+		int originalWidth = originalImage.getWidth();
+		int originalHeight = originalImage.getHeight();
+
+		// Create a new buffered image with the same width and the desired height
+		BufferedImage scaledImage = new BufferedImage(originalWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+
+		// Loop over the new image pixels
+		for (int x = 0; x < originalWidth; x++) {
+			for (int y = 0; y < newHeight; y++) {
+				// Calculate the corresponding original y position based on a nonlinear transformation
+				double normalizedY = (double) y / newHeight; // Normalize y to a value between 0 and 1
+				double transformedY = nonlinearTransformation(normalizedY, stretchFactor);
+
+				int originalY = (int) (transformedY * originalHeight); // Get the corresponding original y position
+
+				// Bound the originalY to be within the original image's dimensions
+				originalY = Math.max(0, Math.min(originalHeight - 1, originalY));
+
+				// Get the color of the original pixel
+				Color color = new Color(originalImage.getRGB(x, originalY));
+
+				// Set the color in the new image
+				scaledImage.setRGB(x, y, color.getRGB());
+			}
+		}
+
+		return scaledImage;
+	}
+
     // Nonlinear transformation function
     private static double nonlinearTransformation(double x, double stretchFactor) {
         // Stretch more near the left or right edge based on the stretch factor
@@ -448,8 +478,10 @@ public class ImageDisplay {
 		System.out.println("newWidth: " + newWidth);
 		System.out.println("newHeight: " + newHeight);
 
-		// Stretch pixels outward from edges to fill letterbox areas
+		// Stretch pixels outward from edges to fill letterbox areas using a nonlinear transformation
 
+		if(!stretchVert){
+		//Horizontal stretch
 		// R represents the distance from the center of the image whic
 		int left_edgeX = centerX - newWidth/2;
 		int right_edgeX = centerX + newWidth/2;
@@ -489,15 +521,61 @@ public class ImageDisplay {
 		g2.drawImage(scaledImage, xOffset, yOffset, null);
 		g2.drawImage(subImageLeft, 0, 0, null);
 		g2.drawImage(subImageRight, rightSampleX, 0, null);
+		} 
+		else {
+			System.out.println("Vertical stretch");
+			//Vertical stretch
+			// R represents the distance from the center of the image whic
+			int top_edgeY = centerY - newHeight/2;
+			int bottom_edgeY = centerY + newHeight/2;
 
-		//Output the subimageright to file right.png
-		File outputfile = new File("right.png");
-		try {
-			ImageIO.write(subImageRight, "png", outputfile);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//pront left_edgeX and right_edgeX
+			System.out.println("top_edgeY: " + top_edgeY);
+			System.out.println("bottom_edgeY: " + bottom_edgeY);
+
+			int r = 320;
+
+			//Get difference between newWidth and outWidth
+			int diffHeight = outHeight - newHeight;
+
+			int topSampleY = top_edgeY + r;
+			int bottomSampleY = bottom_edgeY - r;
+
+			//Get the subimage of the scaled image using edgeX and r
+			BufferedImage subImageTop = scaledImage.getSubimage(0, 0, outWidth, r);
+			//Scale the subimageTop
+			subImageTop = nonlinearHorizontalScale(subImageTop, topSampleY, -0.7);
+
+			File outputfile = new File("top.png");
+			try {
+				ImageIO.write(subImageTop, "png", outputfile);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			//Get the subimage of the scaled image using edgeY and r
+			BufferedImage subImageBottom = scaledImage.getSubimage(0, newHeight-r, outWidth, r);
+			//Scale the subimage to have width of diffWidth
+			subImageBottom= nonlinearVerticalScale(subImageBottom, bottomSampleY, 0.7);
+
+			//Output the subimage to the top of the output image
+			g2.drawImage(scaledImage, xOffset, yOffset, null);
+			g2.drawImage(subImageTop, 0, 0, null);
+			g2.drawImage(subImageBottom, 0, bottomSampleY, null);
+			// //Output the sub
+
+			
 		}
+
+		// //Output the subimageright to file right.png
+		// File outputfile = new File("right.png");
+		// try {
+		// 	ImageIO.write(subImageRight, "png", outputfile);
+		// } catch (IOException e) {
+		// 	// TODO Auto-generated catch block
+		// 	e.printStackTrace();
+		// }
 
 		g2.dispose();
 	}
@@ -675,26 +753,34 @@ public class ImageDisplay {
 		readImageRGB(width, height, args[0], res);
 
 		// //Downsample1
+		// int outWidth = 1920;
+		// int outHeight = 1080;
+		// int outWidth = 1280;
+		// int outHeight = 720;
 		// int outWidth = 640;
-		// int outHeight = 400;
+		// int outHeight = 480;
 		// BufferedImage ds1Out = new BufferedImage(outWidth, outHeight, BufferedImage.TYPE_INT_RGB);
 		// downSample1(width, height, outWidth, outHeight, res, ds1Out);
 		// res = ds1Out;
 
 		//Downsample2
 		//GaussBlur
-		// double rho = 3;
+		double rho = 3;
 
-		// BufferedImage imgBlurOut = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-		// gaussBlur(width, height, (int)(3*rho), rho, res, imgBlurOut);
-		// res = imgBlurOut;
+		BufferedImage imgBlurOut = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		gaussBlur(width, height, (int)(3*rho), rho, res, imgBlurOut);
+		res = imgBlurOut;
 		
-		// // //Then Ds1
+		// //Then Ds1
+		int outWidth = 1920;
+		int outHeight = 1080;
+		// int outWidth = 1280;
+		// int outHeight = 720;
 		// int outWidth = 640;
-		// int outHeight = 400;
-		// BufferedImage ds1Out = new BufferedImage(outWidth, outHeight, BufferedImage.TYPE_INT_RGB);
-		// downSample1(width, height, outWidth, outHeight, res, ds1Out);
-		// res = ds1Out;
+		// int outHeight = 480;
+		BufferedImage ds1Out = new BufferedImage(outWidth, outHeight, BufferedImage.TYPE_INT_RGB);
+		downSample1(width, height, outWidth, outHeight, res, ds1Out);
+		res = ds1Out;
 
 		// //Upsample
 		// int outWidth = 1920;
@@ -711,14 +797,16 @@ public class ImageDisplay {
 		// res = biOut;
 
 		//PAR
-		int outWidth = 1920;
-		int outHeight = 1080;
-		BufferedImage ds1Out = new BufferedImage(outWidth, outHeight, BufferedImage.TYPE_INT_RGB);
-		//downSampleFUCK(width, height, outWidth, outHeight, res, ds1Out, 400);
-		downSampleFirst(width, height, outWidth, outHeight, res, ds1Out);
-		// Graphics2D sGraphics2d = new G
-		// stretchEdges(null, ds1Out, outWidth, outHeight, width, height, outWidth, outHeight, outHeight);
-		res = ds1Out;
+		// int outWidth = 1920;
+		// int outHeight = 1080;
+		// // int outWidth = 640;
+		// // int outHeight = 400;
+		// BufferedImage ds1Out = new BufferedImage(outWidth, outHeight, BufferedImage.TYPE_INT_RGB);
+		// //downSampleFUCK(width, height, outWidth, outHeight, res, ds1Out, 400);
+		// downSampleFirst(width, height, outWidth, outHeight, res, ds1Out);
+		// // Graphics2D sGraphics2d = new G
+		// // stretchEdges(null, ds1Out, outWidth, outHeight, width, height, outWidth, outHeight, outHeight);
+		// res = ds1Out;
 
 		// Use label to display the image
 		frame = new JFrame();
